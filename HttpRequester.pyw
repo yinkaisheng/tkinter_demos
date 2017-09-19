@@ -1,6 +1,6 @@
 #!python3
 # -*- coding: utf-8 -*-
-#author: yinkaisheng@live.com
+#author: yinkaisheng@foxmail.com
 import os
 import sys
 import time
@@ -27,8 +27,8 @@ except Exception as ex:
         subprocess.Popen(sys.argv)
     sys.exit(0)
 
-ISOTIMEFORMAT = '%Y-%m-%d %X'
-HEIGHT_TEXT_HEIGHT = 8
+ISO_TIME_FORMAT = '%Y-%m-%d %X'
+HEADER_TEXT_HEIGHT = 8
 
 
 class HttpRequest():
@@ -36,38 +36,38 @@ class HttpRequest():
         self.time = ''
         self.url = ''
         self.proxy = ()
-        self.proxyDict = {}
-        self.requestHeader = ''
-        self.requestHeaderDict = {}
-        self.requestData = ''
-        self.realUrl = ''
-        self.responseHeader = ''
-        self.responseHeaderDict = {}
-        self.responseData = ''
-        self.responseJson = ''
-        self.responseCode = ''
-        self.responseTime = 0
+        self.proxy_dict = {}
+        self.request_header = ''
+        self.request_header_dict = {}
+        self.request_data = ''
+        self.real_url = ''
+        self.response_header = ''
+        self.response_header_dict = {}
+        self.response_data = ''
+        self.response_json = ''
+        self.response_code = ''
+        self.response_time = 0
         self.exception = None
         self.timeout = 60
 
 
 class Util():
     @staticmethod
-    def headerToDict(header, headerDict = None):
+    def header_2_dict(header, header_dict = None):
         headers = header.splitlines()
-        if headerDict is None:
-            headerDict = {}
+        if header_dict is None:
+            header_dict = {}
         for it in headers:
             item = it.split(':')
             if len(item) == 2:
-                headerDict[item[0].strip()] = item[1].strip()
-        return headerDict
+                header_dict[item[0].strip()] = item[1].strip()
+        return header_dict
 
     @staticmethod
-    def dictToHeader(headerDict):
+    def dict_2_header(header_dict):
         header = ''
-        for key in headerDict:
-            header += "%s: %s\r\n" % (key, headerDict[key])
+        for key in header_dict:
+            header += "%s: %s\r\n" % (key, header_dict[key])
         return header
 
 
@@ -75,96 +75,95 @@ class MainFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.historyVar = tk.StringVar()
-        self.urlVar = tk.StringVar()
-        self.jsonFormatVar = tk.BooleanVar()
-        self.proxyVar = tk.StringVar()
-        self.timeoutVar = tk.StringVar()
+        self.history_var = tk.StringVar()
+        self.url_var = tk.StringVar()
+        self.json_format_var = tk.BooleanVar()
+        self.proxy_var = tk.StringVar()
+        self.timeout_var = tk.StringVar()
         self.quene = queue.Queue()
-        self.httpItem = HttpRequest()
-        self.httpItems = []
-        self.configFile = 'history.dat'
-        scriptDir = os.path.dirname(__file__)
-        if scriptDir:
-            os.chdir(scriptDir)
+        self.http_item = HttpRequest()
+        self.http_items = []
+        self.history_file = 'history.dat'
+        script_dir = os.path.dirname(__file__)
+        if script_dir:
+            os.chdir(script_dir)
 
-        if os.path.exists(self.configFile):
-            self.httpItems = pickle.load(open(self.configFile, 'rb'))
+        if os.path.exists(self.history_file):
+            self.http_items = pickle.load(open(self.history_file, 'rb'))
 
         self.pack(expand = True, fill = tk.BOTH)
-        self.initUI()
+        self.init_ui()
 
-        self.master.protocol("WM_DELETE_WINDOW", self.onClose)
+        self.master.protocol("WM_DELETE_WINDOW", self.close)
 
-    def initUI(self):
+    def init_ui(self):
         self.master.title('HttpRequester')
         self.pack(fill = tk.BOTH, expand = 1)
-        self.centerWindow()
+        self.center_window()
 
-        historyFrame = ttk.Frame(self)
-        historyFrame.pack(fill = tk.X, padx = 4, pady = 4)
-        ttk.Label(historyFrame, text = 'History:', width = 8).pack(side = tk.LEFT)
-        ttk.Button(historyFrame, text = 'ClearHistory', command = self.clearHistory).pack(side = tk.RIGHT)
-        self.historyCombo = ttk.Combobox(historyFrame, textvariable = self.historyVar, state = 'readonly')
-        self.historyCombo.bind("<<ComboboxSelected>>", self.historySelect)
-        self.historyCombo['values'] = ()
-        self.historyCombo.pack(fill = tk.X, expand = 1, padx = 4)
+        history_frame = ttk.Frame(self)
+        history_frame.pack(fill = tk.X, padx = 4, pady = 4)
+        ttk.Label(history_frame, text = 'History:', width = 8).pack(side = tk.LEFT)
+        ttk.Button(history_frame, text = 'ClearHistory', command = self.clear_history).pack(side = tk.RIGHT)
+        self.history_combo = ttk.Combobox(history_frame, textvariable = self.history_var, state = 'readonly')
+        self.history_combo.bind("<<ComboboxSelected>>", self.history_select)
+        self.history_combo['values'] = ()
+        self.history_combo.pack(fill = tk.X, expand = 1, padx = 4)
 
-        urlFrame = ttk.Frame(self)
-        urlFrame.pack(fill = tk.X, padx = 4, pady = 4)
-        ttk.Label(urlFrame, text = 'URL:', width = 8).pack(side = tk.LEFT)
-        self.sendBtn = ttk.Button(urlFrame, text = 'Send', command = self.send)
-        self.sendBtn.pack(side = tk.RIGHT)
-        self.urlEntry = ttk.Entry(urlFrame, textvariable = self.urlVar)
-        self.urlEntry.pack(fill = tk.X, expand = 1, padx = 4)
+        url_frame = ttk.Frame(self)
+        url_frame.pack(fill = tk.X, padx = 4, pady = 4)
+        ttk.Label(url_frame, text = 'URL:', width = 8).pack(side = tk.LEFT)
+        self.send_btn = ttk.Button(url_frame, text = 'Send', command = self.send)
+        self.send_btn.pack(side = tk.RIGHT)
+        self.url_entry = ttk.Entry(url_frame, textvariable = self.url_var)
+        self.url_entry.pack(fill = tk.X, expand = 1, padx = 4)
 
-        configFrame = ttk.Frame(self)
-        configFrame.pack(fill = tk.X, padx = 4, pady = 4)
-        self.timeLabel = ttk.Label(configFrame, text = '')
-        self.timeLabel.pack(side = tk.RIGHT)
-        self.timeoutVar.set('10')
-        self.timeoutEntry = ttk.Entry(configFrame, textvariable = self.timeoutVar, width = 4)
-        self.timeoutEntry.pack(side = tk.RIGHT)
-        ttk.Label(configFrame, text = 'Timeout:').pack(side = tk.RIGHT)
-        self.proxyEntry = ttk.Entry(configFrame)
-        self.proxyEntry.pack(side = tk.RIGHT)
-        self.proxyCombo = ttk.Combobox(configFrame, textvariable = self.proxyVar, state = 'readonly', width = 4)
-        self.proxyCombo.pack(side = tk.RIGHT, padx = 4)
-        self.proxyCombo['values'] = ('http', 'https')
-        self.proxyCombo.current(0)
-        ttk.Label(configFrame, text = 'Proxy:').pack(side = tk.RIGHT)
+        config_frame = ttk.Frame(self)
+        config_frame.pack(fill = tk.X, padx = 4, pady = 4)
+        self.time_label = ttk.Label(config_frame, text = '')
+        self.time_label.pack(side = tk.RIGHT)
+        self.timeout_var.set('10')
+        self.timeout_entry = ttk.Entry(config_frame, textvariable = self.timeout_var, width = 4)
+        self.timeout_entry.pack(side = tk.RIGHT)
+        ttk.Label(config_frame, text = 'Timeout:').pack(side = tk.RIGHT)
+        self.proxy_entry = ttk.Entry(config_frame)
+        self.proxy_entry.pack(side = tk.RIGHT)
+        self.proxy_combo = ttk.Combobox(config_frame, textvariable = self.proxy_var, state = 'readonly', width = 4)
+        self.proxy_combo.pack(side = tk.RIGHT, padx = 4)
+        self.proxy_combo['values'] = ('http', 'https')
+        self.proxy_combo.current(0)
+        ttk.Label(config_frame, text = 'Proxy:').pack(side = tk.RIGHT)
 
-        dataFrame = ttk.Frame(self)
-        dataFrame.pack(fill = tk.BOTH, expand = 1, padx = 4, pady = 4)
-        dataFrame.columnconfigure(0, weight = 1)
-        dataFrame.columnconfigure(4, weight = 1)
-        dataFrame.rowconfigure(3, weight = 1)
+        data_frame = ttk.Frame(self)
+        data_frame.pack(fill = tk.BOTH, expand = 1, padx = 4, pady = 4)
+        data_frame.columnconfigure(0, weight = 1)
+        data_frame.columnconfigure(4, weight = 1)
+        data_frame.rowconfigure(3, weight = 1)
 
-        ttk.Label(dataFrame, text = 'RequestHeader:').grid(row = 0, column = 0, stick = tk.W)
-        ttk.Label(dataFrame, text = 'ResponsetHeader:').grid(row = 0, column = 4, stick = tk.W)
-        self.requestHeaderEntry = ScrolledText(dataFrame, height = HEIGHT_TEXT_HEIGHT)
-        self.requestHeaderEntry.grid(row = 1, column = 0, columnspan = 4, stick = tk.NSEW)
+        ttk.Label(data_frame, text = 'RequestHeader:').grid(row = 0, column = 0, stick = tk.W)
+        ttk.Label(data_frame, text = 'ResponsetHeader:').grid(row = 0, column = 4, stick = tk.W)
+        self.request_header_entry = ScrolledText(data_frame, height = HEADER_TEXT_HEIGHT)
+        self.request_header_entry.grid(row = 1, column = 0, columnspan = 4, stick = tk.NSEW)
 
-        self.responseHeaderEntry = ScrolledText(dataFrame, height = HEIGHT_TEXT_HEIGHT)
-        self.responseHeaderEntry.grid(row = 1, column = 4, columnspan = 4, stick = tk.NSEW)
+        self.response_header_entry = ScrolledText(data_frame, height = HEADER_TEXT_HEIGHT)
+        self.response_header_entry.grid(row = 1, column = 4, columnspan = 4, stick = tk.NSEW)
 
-        ttk.Label(dataFrame, text = 'RequestData:').grid(row = 2, column = 0, stick = tk.W)
-        ttk.Label(dataFrame, text = 'ResponsetData:').grid(row = 2, column = 4, stick = tk.W)
-        #self.jsonCheck = tk.Checkbutton(dataFrame, text = 'JsonFormat', variable = self.jsonFormatVar)
-        #self.jsonCheck.deselect()
-        self.jsonCheck = ttk.Checkbutton(dataFrame, text = 'JsonFormat', variable = self.jsonFormatVar, command = self.formatJson)
-        self.jsonCheck.grid(row = 2, column = 5, stick = tk.W)
-        self.requestDataEntry = ScrolledText(dataFrame, wrap = tk.WORD)
-        self.requestDataEntry.grid(row = 3, column = 0, columnspan = 4, stick = tk.NSEW)
+        ttk.Label(data_frame, text = 'RequestData:').grid(row = 2, column = 0, stick = tk.W)
+        ttk.Label(data_frame, text = 'ResponsetData:').grid(row = 2, column = 4, stick = tk.W)
 
-        self.responseDataEntry = ScrolledText(dataFrame, wrap = tk.WORD)
-        self.responseDataEntry.grid(row = 3, column = 4, columnspan = 4, stick = tk.NSEW)
+        self.json_check = ttk.Checkbutton(data_frame, text = 'JsonFormat', variable = self.json_format_var, command = self.format_json)
+        self.json_check.grid(row = 2, column = 5, stick = tk.W)
+        self.request_data_entry = ScrolledText(data_frame, wrap = tk.WORD)
+        self.request_data_entry.grid(row = 3, column = 0, columnspan = 4, stick = tk.NSEW)
 
-        values = [http.time + ' ' + http.url for http in self.httpItems]
-        self.historyCombo['values'] = values
-        self.requestHeaderEntry.insert(1.0, 'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:55.0) Gecko/20100101 Firefox/55.0')
+        self.response_data_entry = ScrolledText(data_frame, wrap = tk.WORD)
+        self.response_data_entry.grid(row = 3, column = 4, columnspan = 4, stick = tk.NSEW)
 
-    def centerWindow(self, width = 1400, height = 700):
+        values = [http.time + ' ' + http.url for http in self.http_items]
+        self.history_combo['values'] = values
+        self.request_header_entry.insert(1.0, 'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:55.0) Gecko/20100101 Firefox/55.0')
+
+    def center_window(self, width = 1400, height = 700):
         sw = self.master.winfo_screenwidth()
         sh = self.master.winfo_screenheight() - 40
         if width > sw:
@@ -176,139 +175,138 @@ class MainFrame(tk.Frame):
         self.master.geometry('{}x{}+{}+{}'.format(width, height, x, y))
         self.master.minsize(640, 480)
 
-    def onClose(self):
-        pickle.dump(self.httpItems, open(self.configFile, 'wb'))
+    def close(self):
+        pickle.dump(self.http_items, open(self.history_file, 'wb'))
         self.master.destroy()
 
-    def historySelect(self, event):
-        selected = self.historyCombo.current()
-        self.setUI(self.httpItems[selected])
+    def history_select(self, event):
+        selected = self.history_combo.current()
+        self.set_ui(self.http_items[selected])
 
-    def enableUI(self, isEnable):
-        if isEnable:
-            self.sendBtn.config(state = tk.NORMAL)
+    def enable_ui(self, enable):
+        if enable:
+            self.send_btn.config(state = tk.NORMAL)
         else:
-            self.sendBtn.config(state = tk.DISABLED)
+            self.send_btn.config(state = tk.DISABLED)
 
-    def clearHistory(self):
-        self.historyCombo['values'] = ()
-        self.historyVar.set('')
-        self.httpItems = []
-        pickle.dump(self.httpItems, open(self.configFile, 'wb'))
+    def clear_history(self):
+        self.history_combo['values'] = ()
+        self.history_var.set('')
+        self.http_items = []
+        pickle.dump(self.http_items, open(self.history_file, 'wb'))
 
-    def setUI(self, httpItem):
-        self.httpItem = httpItem
-        self.urlVar.set(httpItem.url)
-        self.requestHeaderEntry.delete(1.0, tk.END)
-        self.requestHeaderEntry.insert(1.0, httpItem.requestHeader)
-        self.requestDataEntry.delete(1.0, tk.END)
-        self.requestDataEntry.insert(1.0, httpItem.requestData)
-        self.responseHeaderEntry.delete(1.0, tk.END)
-        self.responseHeaderEntry.insert(1.0, httpItem.responseHeader)
-        self.formatJson()
+    def set_ui(self, http_item):
+        self.http_item = http_item
+        self.url_var.set(http_item.url)
+        self.request_header_entry.delete(1.0, tk.END)
+        self.request_header_entry.insert(1.0, http_item.request_header)
+        self.request_data_entry.delete(1.0, tk.END)
+        self.request_data_entry.insert(1.0, http_item.request_data)
+        self.response_header_entry.delete(1.0, tk.END)
+        self.response_header_entry.insert(1.0, http_item.response_header)
+        self.format_json()
 
-    def formatJson(self):
-        if self.jsonFormatVar.get() and self.httpItem.responseData.startswith('{'):
-            if not self.httpItem.responseJson:
+    def format_json(self):
+        if self.json_format_var.get() and self.http_item.response_data.startswith('{'):
+            if not self.http_item.response_json:
                 try:
-                    self.httpItem.responseJson = json.dumps(json.loads(self.httpItem.responseData), sort_keys = False, indent = 2, ensure_ascii = False)
+                    self.http_item.response_json = json.dumps(json.loads(self.http_item.response_data), sort_keys = False, indent = 2, ensure_ascii = False)
                 except Exception as ex:
                     pass
-            self.responseDataEntry.delete(1.0, tk.END)
-            self.responseDataEntry.insert(1.0, self.httpItem.responseJson)
+            self.response_data_entry.delete(1.0, tk.END)
+            self.response_data_entry.insert(1.0, self.http_item.response_json)
         else:
-            self.responseDataEntry.delete(1.0, tk.END)
-            self.responseDataEntry.insert(1.0, self.httpItem.responseData)
+            self.response_data_entry.delete(1.0, tk.END)
+            self.response_data_entry.insert(1.0, self.http_item.response_data)
 
     def send(self):
-        url = self.urlVar.get().strip()
+        url = self.url_var.get().strip()
         if not url:
             return
         try:
-            timeout = int(self.timeoutEntry.get())
+            timeout = int(self.timeout_entry.get())
         except Exception as ex:
             timeout = 10
-        proxyType = self.proxyVar.get()
-        proxy = self.proxyEntry.get().strip()
-        formatJson = self.jsonFormatVar.get()
-        requestHeader = self.requestHeaderEntry.get('0.0', tk.END)
-        requestData = self.requestDataEntry.get('0.0', tk.END).strip()
+        proxy_type = self.proxy_var.get()
+        proxy = self.proxy_entry.get().strip()
+        format_json = self.json_format_var.get()
+        request_header = self.request_header_entry.get('0.0', tk.END)
+        request_data = self.request_data_entry.get('0.0', tk.END).strip()
 
-        httpItem = HttpRequest()
-        self.httpItem = httpItem
+        http_item = HttpRequest()
+        self.http_item = http_item
 
-        httpItem.url = url
-        httpItem.timeout = timeout
+        http_item.url = url
+        http_item.timeout = timeout
         if proxy:
-            httpItem.proxy = (proxyType, proxy)
+            http_item.proxy = (proxy_type, proxy)
             if not proxy.startswith('http'):
-                proxy = '%s://%s' % (proxyType, proxy)
-            httpItem.proxyDict[proxyType] = proxy
+                proxy = '%s://%s' % (proxy_type, proxy)
+            http_item.proxy_dict[proxy_type] = proxy
 
-        httpItem.requestHeader = requestHeader
-        Util.headerToDict(httpItem.requestHeader, httpItem.requestHeaderDict)
-        httpItem.requestData = requestData
+        http_item.request_header = request_header
+        Util.header_2_dict(http_item.request_header, http_item.request_header_dict)
+        http_item.request_data = request_data
 
-        self.responseDataEntry.delete(1.0, tk.END)
-        self.responseHeaderEntry.delete(1.0, tk.END)
-        funcThread = Thread(target = self.threadFunc, args = (httpItem, ))
-        funcThread.setDaemon(True)
-        funcThread.start()
+        self.response_data_entry.delete(1.0, tk.END)
+        self.response_header_entry.delete(1.0, tk.END)
+        func_thread = Thread(target = self.thread_func, args = (http_item, ))
+        func_thread.setDaemon(True)
+        func_thread.start()
 
-        self.enableUI(False)
-        self.timeLabel.config(text = 'Waiting ...')
+        self.enable_ui(False)
+        self.time_label.config(text = 'Waiting ...')
 
         self.master.after(100, self.timer, 1)
 
-    def sendFinished(self):
-        if self.httpItem.exception:
-            responseTime = 'Exception: {}'.format(self.httpItem.exception.__class__.__name__)
+    def send_finished(self):
+        if self.http_item.exception:
+            response_time = 'Exception: {}'.format(self.http_item.exception.__class__.__name__)
         else:
-            responseTime = 'ResponseTime: {:.3f}s'.format(self.httpItem.responseTime)
-        self.timeLabel.config(text = responseTime)
-        self.requestHeaderEntry.delete(1.0, tk.END)
-        self.requestHeaderEntry.insert(1.0, self.httpItem.requestHeader)
-        self.responseHeaderEntry.delete(1.0, tk.END)
-        self.responseHeaderEntry.insert(1.0, self.httpItem.responseHeader)
-        self.formatJson()
+            response_time = 'ResponseTime: {:.3f}s'.format(self.http_item.response_time)
+        self.time_label.config(text = response_time)
+        self.request_header_entry.delete(1.0, tk.END)
+        self.request_header_entry.insert(1.0, self.http_item.request_header)
+        self.response_header_entry.delete(1.0, tk.END)
+        self.response_header_entry.insert(1.0, self.http_item.response_header)
+        self.format_json()
 
-        self.httpItems.append(self.httpItem)
-        self.historyCombo['values'] += (self.httpItem.time + ' ' + self.httpItem.url, )
-        self.enableUI(True)
-        pickle.dump(self.httpItems, open(self.configFile, 'wb'))
+        self.http_items.append(self.http_item)
+        self.history_combo['values'] += (self.http_item.time + ' ' + self.http_item.url, )
+        self.enable_ui(True)
+        pickle.dump(self.http_items, open(self.history_file, 'wb'))
 
-    def timer(self, timerId):
+    def timer(self, timer_id):
         if self.quene.empty():
-            self.master.after(100, self.timer, timerId)
+            self.master.after(100, self.timer, timer_id)
         else:
             self.quene.get()
-            self.sendFinished()
+            self.send_finished()
 
-    def threadFunc(self, httpItem):
+    def thread_func(self, http_item):
         start = time.clock()
         try:
             # get raw data if stream is True
-            httpItem.time = time.strftime(ISOTIMEFORMAT, time.localtime())
-            if httpItem.requestData:
-                response = requests.post(httpItem.url, data=httpItem.requestData, headers=httpItem.requestHeaderDict, proxies=httpItem.proxyDict, timeout=httpItem.timeout, stream=False)
+            http_item.time = time.strftime(ISO_TIME_FORMAT, time.localtime())
+            if http_item.request_data:
+                response = requests.post(http_item.url, data=http_item.request_data, headers=http_item.request_header_dict, proxies=http_item.proxy_dict, timeout=http_item.timeout, stream=False)
             else:
-                response = requests.get(httpItem.url, headers=httpItem.requestHeaderDict, proxies=httpItem.proxyDict, timeout=httpItem.timeout, stream=False)
+                response = requests.get(http_item.url, headers=http_item.request_header_dict, proxies=http_item.proxy_dict, timeout=http_item.timeout, stream=False)
             header = ''
             for key in response.request.headers:
-                if key not in httpItem.requestHeader:
+                if key not in http_item.request_header:
                     header += '%s: %s\r\n' % (key, response.request.headers[key])
-            httpItem.requestHeader = header + httpItem.requestHeader
-            httpItem.realUrl = response.url
-            httpItem.responseHeaderDict = response.headers
-            httpItem.responseHeader = Util.dictToHeader(response.headers)
-            httpItem.responseData = response.text
-            #httpItem.responseJson = response.json()
-            httpItem.responseCode = response.status_code
+            http_item.request_header = header + http_item.request_header
+            http_item.real_url = response.url
+            http_item.response_header_dict = response.headers
+            http_item.response_header = Util.dict_2_header(response.headers)
+            http_item.response_data = response.text
+            http_item.response_code = response.status_code
         except requests.exceptions.RequestException as ex:
-            httpItem.exception = ex
+            http_item.exception = ex
             print(traceback.format_exc())
 
-        httpItem.responseTime = time.clock() - start
+        http_item.response_time = time.clock() - start
         self.quene.put(0)
 
 def main():
