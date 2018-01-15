@@ -15,3 +15,10 @@ You can add buttons with different pack configurations(side, expand, fill, ancho
 HttpRequester.pyw is a simple http client using requests.
 
 ![HttpRequester](images/HttpRequester.png)
+
+
+
+**StopWatch**
+
+![StopWatch](images/StopWatch.png)
+
