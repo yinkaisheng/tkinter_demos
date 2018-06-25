@@ -27,7 +27,7 @@ class Example(tk.Frame):
             global ScreenText, TextColor, FontName, FontSize, Opacity, Anchor
             config = configparser.ConfigParser()
             config.read(iniFile, encoding= 'utf-8')
-            ScreenText = config.get('config', 'ScreenText')
+            ScreenText = config.get('config', 'ScreenText').replace('\\n', '\n')
             Anchor = config.get('config', 'Anchor')
             TextColor = config.get('config', 'TextColor')
             FontName = config.get('config', 'FontName')
