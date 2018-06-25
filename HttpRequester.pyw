@@ -5,13 +5,12 @@ import os
 import sys
 import time
 import json
-import queue
 import pickle
 import traceback
-from threading import Thread
 import tkinter as tk
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
+from tkasyncframe import AsyncFrame
 
 try:
     import requests
@@ -71,7 +70,7 @@ class Util():
         return header
 
 
-class MainFrame(tk.Frame):
+class MainFrame(AsyncFrame):
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -80,7 +79,6 @@ class MainFrame(tk.Frame):
         self.json_format_var = tk.BooleanVar()
         self.proxy_var = tk.StringVar()
         self.timeout_var = tk.StringVar()
-        self.quene = queue.Queue()
         self.http_item = HttpRequest()
         self.http_items = []
         self.history_file = 'history.dat'
@@ -99,7 +97,8 @@ class MainFrame(tk.Frame):
     def init_ui(self):
         self.master.title('HttpRequester')
         self.pack(fill = tk.BOTH, expand = 1)
-        self.center_window()
+        self.centerWindow(0.8, 0.8)
+        self.master.minsize(640, 480)
 
         history_frame = ttk.Frame(self)
         history_frame.pack(fill = tk.X, padx = 4, pady = 4)
@@ -163,18 +162,6 @@ class MainFrame(tk.Frame):
         self.history_combo['values'] = values
         self.request_header_entry.insert(1.0, 'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:55.0) Gecko/20100101 Firefox/55.0')
 
-    def center_window(self, width = 1400, height = 700):
-        sw = self.master.winfo_screenwidth()
-        sh = self.master.winfo_screenheight() - 40
-        if width > sw:
-            width = sw
-        if height > sh:
-            height = sh
-        x = (sw - width) // 2
-        y = (sh - height) // 2
-        self.master.geometry('{}x{}+{}+{}'.format(width, height, x, y))
-        self.master.minsize(640, 480)
-
     def close(self):
         pickle.dump(self.http_items, open(self.history_file, 'wb'))
         self.master.destroy()
@@ -236,6 +223,8 @@ class MainFrame(tk.Frame):
         http_item = HttpRequest()
         self.http_item = http_item
 
+        if url[:4] != 'http':
+            url = 'http://' + url
         http_item.url = url
         http_item.timeout = timeout
         if proxy:
@@ -250,16 +239,11 @@ class MainFrame(tk.Frame):
 
         self.response_data_entry.delete(1.0, tk.END)
         self.response_header_entry.delete(1.0, tk.END)
-        func_thread = Thread(target = self.thread_func, args = (http_item, ))
-        func_thread.setDaemon(True)
-        func_thread.start()
-
+        self.runInThread(self.thread_func, http_item, self.response_notify)
         self.enable_ui(False)
         self.time_label.config(text = 'Waiting ...')
 
-        self.master.after(100, self.timer, 1)
-
-    def send_finished(self):
+    def response_notify(self, notify_id, args):
         if self.http_item.exception:
             response_time = 'Exception: {}'.format(self.http_item.exception.__class__.__name__)
         else:
@@ -276,15 +260,8 @@ class MainFrame(tk.Frame):
         self.enable_ui(True)
         pickle.dump(self.http_items, open(self.history_file, 'wb'))
 
-    def timer(self, timer_id):
-        if self.quene.empty():
-            self.master.after(100, self.timer, timer_id)
-        else:
-            self.quene.get()
-            self.send_finished()
-
-    def thread_func(self, http_item):
-        start = time.clock()
+    def thread_func(self, threadId, http_item):
+        start = time.time()
         try:
             # get raw data if stream is True
             http_item.time = time.strftime(ISO_TIME_FORMAT, time.localtime())
@@ -306,8 +283,7 @@ class MainFrame(tk.Frame):
             http_item.exception = ex
             print(traceback.format_exc())
 
-        http_item.response_time = time.clock() - start
-        self.quene.put(0)
+        http_item.response_time = time.time() - start
 
 def main():
     root = tk.Tk()
