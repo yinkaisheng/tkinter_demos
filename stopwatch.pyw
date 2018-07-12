@@ -4,6 +4,7 @@
 import os
 import sys
 import time
+import datetime
 import tkinter as tk
 import tkinter.font as tkFont
 from tkasyncframe import AsyncFrame
@@ -17,8 +18,10 @@ class MainFrame(AsyncFrame):
     def __init__(self):
         super().__init__()
         self.started = False
+        self.showSysTime = False
         self.intervalVar = tk.StringVar()
         self.intervalVar.set(TIMER_WATCH_INTERVAL)
+        self.showSysTimeVar = tk.BooleanVar()
         self.topmostVar = tk.BooleanVar()
         self.initUI()
         self.bind("<KeyRelease>", self.onKeyPressed)
@@ -43,6 +46,7 @@ class MainFrame(AsyncFrame):
         entry.pack(side = tk.LEFT)
         entry.bind("<KeyRelease>", self.onKeyPressed)
         tk.Label(valueFrame, text = 'ms,').pack(side = tk.LEFT)
+        tk.Checkbutton(valueFrame, text = 'ShowSystemTime', variable = self.showSysTimeVar, command = self.onCheckUseSysTime).pack(side = tk.LEFT, padx = 4)
         tk.Checkbutton(valueFrame, text = 'Topmost', variable = self.topmostVar, command = self.onCheckTopmost).pack(side = tk.LEFT, padx = 4)
         ft = tkFont.Font(family='Fixdsys', size= TIMER_FONT_SIZE, weight=tkFont.BOLD)
         self.timeLabel = tk.Label(self, text = '0.000', font = ft)
@@ -57,6 +61,9 @@ class MainFrame(AsyncFrame):
             self.master.iconbitmap('stopwatch.ico')
         else:
             self.master.iconbitmap('@stopwatch.xbm')
+
+    def onCheckUseSysTime(self):
+        self.showSysTime = self.showSysTimeVar.get()
 
     def onCheckTopmost(self):
         self.setTopmost(self.topmostVar.get())
@@ -88,7 +95,11 @@ class MainFrame(AsyncFrame):
             self.started = False
 
     def onTimer(self, execCount, elapsedTime):
-        self.timeLabel.config(text = '{:.3f}'.format(elapsedTime))
+        if self.showSysTime:
+            now = datetime.datetime.now()
+            self.timeLabel.config(text = '{:02}:{:02}.{:03}'.format(now.hour, now.second, now.microsecond // 1000))
+        else:
+            self.timeLabel.config(text = '{:.3f}'.format(elapsedTime))
 
 
 def main():
