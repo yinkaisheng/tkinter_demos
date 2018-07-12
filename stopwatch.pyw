@@ -64,6 +64,9 @@ class MainFrame(AsyncFrame):
 
     def onCheckUseSysTime(self):
         self.showSysTime = self.showSysTimeVar.get()
+        if self.showSysTime:
+            if self.winfo_width() < 820:
+                self.centerWindow(width = 820)
 
     def onCheckTopmost(self):
         self.setTopmost(self.topmostVar.get())
@@ -97,7 +100,7 @@ class MainFrame(AsyncFrame):
     def onTimer(self, execCount, elapsedTime):
         if self.showSysTime:
             now = datetime.datetime.now()
-            self.timeLabel.config(text = '{:02}:{:02}.{:03}'.format(now.hour, now.second, now.microsecond // 1000))
+            self.timeLabel.config(text = '{:02}:{:02}:{:02}.{:03}'.format(now.hour, now.minute, now.second, now.microsecond // 1000))
         else:
             self.timeLabel.config(text = '{:.3f}'.format(elapsedTime))
 
