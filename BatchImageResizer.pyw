@@ -80,7 +80,7 @@ class MainFrame(AsyncFrame):
         dst_ext_label = ttk.Label(format_frame, text = ' Output Format:')
         dst_ext_label.pack(side = tk.LEFT)
         self.dst_ext_combo = ttk.Combobox(format_frame, textvariable = self.dst_ext_var, state = 'readonly', width = 10)
-        self.dst_ext_combo['values'] = ['.png', '.jpg', '.gif', '.tiff', '.bmp', 'Doesn\'t Change']
+        self.dst_ext_combo['values'] = ['.png', '.jpg', '.gif', '.tiff', '.bmp', 'No Change']
         self.dst_ext_combo.pack(side = tk.LEFT)
 
         transform_frame = ttk.Frame(self)
