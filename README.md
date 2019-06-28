@@ -1,5 +1,6 @@
 # tkinter_demos
-some tkinter demos
+some tkinter demos by yinkaisheng@live.com
+
 
 **pack_demo**
 
@@ -24,7 +25,7 @@ HttpRequester.pyw is a simple http client using requests.
 
 **ScreenTip**
 
-ScreenTip.pyw is a tool than shows a topmost tip over other windows while you still can click the windows under the tip.
+ScreenTip.pyw is a tool than shows a topmost tip over other windows while you still can click(operate) the windows under the tip.
 
 ![ScreenTip](images/ScreenTip.png)
 
