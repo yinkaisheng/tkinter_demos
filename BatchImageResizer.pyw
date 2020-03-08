@@ -11,7 +11,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
-from tkasyncframe import AsyncFrame
+from tkasyncframe import AsyncFrame, WidgetUtil
 
 RESIZE_NOTIFY_ID = 1
 
@@ -23,7 +23,7 @@ ImgMode = {
     '.gif': 'P',
 }
 
-class MainFrame(AsyncFrame):
+class MainFrame(AsyncFrame, WidgetUtil):
     def __init__(self, parent):
         super().__init__(parent)
         self.started = False
@@ -34,6 +34,8 @@ class MainFrame(AsyncFrame):
         self.src_ext_var.set('.jpg .jpeg .png .bmp .tif .tiff')
         self.dst_ext_var = tk.StringVar()
         self.dst_ext_var.set('.png')
+        self.clip_var = tk.StringVar()
+        self.clip_var.set('0,0,0,0')
         self.side_var = tk.StringVar()
         self.side_var.set(1920)
         self.rotate_var = tk.StringVar()
@@ -50,7 +52,7 @@ class MainFrame(AsyncFrame):
     def init_ui(self):
         self.master.title('Batch Image Resizer by yinkaisheng')
         self.pack(fill = tk.BOTH, expand = 1)
-        self.centerWindow(600, 0.5)
+        self.centerWindow(720, 0.5)
         self.master.minsize(600, 400)
 
         src_frame = ttk.Frame(self)
@@ -64,7 +66,7 @@ class MainFrame(AsyncFrame):
 
         dst_frame = ttk.Frame(self)
         dst_frame.pack(side = tk.TOP, fill = tk.X, padx = 4, pady = 4)
-        dst_label = ttk.Label(dst_frame, text = 'Output Folder:')
+        dst_label = ttk.Label(dst_frame, text = 'Output Folder: ')
         dst_label.pack(side = tk.LEFT)
         self.start_btn = ttk.Button(dst_frame, text = 'Start', command = self.on_click_start)
         self.start_btn.pack(side = tk.RIGHT)
@@ -85,7 +87,11 @@ class MainFrame(AsyncFrame):
 
         transform_frame = ttk.Frame(self)
         transform_frame.pack(side = tk.TOP, fill = tk.X, padx = 4, pady = 4)
-        size_label = ttk.Label(transform_frame, text = 'Max Width or Height:')
+        clip_label = ttk.Label(transform_frame, text = 'clip l,t,r,b:')
+        clip_label.pack(side = tk.LEFT)
+        self.clip_entry = ttk.Entry(transform_frame, textvariable = self.clip_var, width = 14)
+        self.clip_entry.pack(side = tk.LEFT)
+        size_label = ttk.Label(transform_frame, text = ' Max Width or Height:')
         size_label.pack(side = tk.LEFT)
         self.side_entry = ttk.Entry(transform_frame, textvariable = self.side_var, width = 6)
         self.side_entry.pack(side = tk.LEFT)
@@ -121,20 +127,28 @@ class MainFrame(AsyncFrame):
                 return
             if not os.path.exists(dst_path):
                 os.makedirs(dst_path)
+            clips = self.clip_var.get().split(',')
+            if len(clips) == 4:
+                try:
+                    clips = tuple(int(it) for it in clips)
+                except:
+                    clips = (0, 0, 0, 0)
+            else:
+                clips = (0, 0, 0, 0)
             max_side = int(self.side_var.get())
             src_exts = self.src_ext_var.get()
             dst_ext = self.dst_ext_var.get()
             rotate = int(self.rotate_var.get())
             flip_lr = self.flip_left_right_var.get()
             flip_tb = self.flip_top_bottom_var.get()
-            self.runInThread(self.convert_func, (self.stop_event, src_path, dst_path, src_exts, dst_ext, max_side, rotate, flip_lr, flip_tb), self.convert_notify)
+            self.runInThread(self.convert_func, (self.stop_event, src_path, dst_path, src_exts, dst_ext, clips, max_side, rotate, flip_lr, flip_tb), self.convert_notify)
             self.start_btn.config(text = 'Stop')
             self.started = True
             self.clearEntry(self.output_entry)
         else:
             self.stop_event.set()
 
-    def convert_notify(self, notify_id, args):
+    def convert_notify(self, thread_id, notify_id, args):
         if notify_id == RESIZE_NOTIFY_ID:
             self.appendEntryText(self.output_entry, args + '\n')
         elif notify_id == AsyncFrame.NotifyID_ThreadExit:
@@ -146,7 +160,7 @@ class MainFrame(AsyncFrame):
             pass
 
     def convert_func(self, threadId, args):
-        stop_event, src_dir, dst_dir, src_exts, dst_ext, max_side, rotate, flip_lr, flip_tb = args
+        stop_event, src_dir, dst_dir, src_exts, dst_ext, clips, max_side, rotate, flip_lr, flip_tb = args
         files = os.listdir(src_dir)
         src_exts = src_exts.lower().split()
         for it in files:
@@ -163,17 +177,20 @@ class MainFrame(AsyncFrame):
                     newfile = name + dst_ext
                 src_file = os.path.join(src_dir, it)
                 dst_file = os.path.join(dst_dir, newfile)
-                w, h, nw, nh = self.resize_image(src_file, ext, dst_file, dst_ext, max_side, rotate, flip_lr, flip_tb)
+                w, h, nw, nh = self.resize_image(src_file, ext, dst_file, dst_ext, clips, max_side, rotate, flip_lr, flip_tb)
                 info = '{}, {}x{} -> {}, {}x{}'.format(it, w, h, newfile, nw, nh)
                 self.threadNotifyUI(threadId, RESIZE_NOTIFY_ID, info)
 
-    def resize_image(self, src_path, src_ext, dst_path, dst_ext, max_side = 1920, rotate = 0, flip_lr = 0, flip_rb = 0):
+    def resize_image(self, src_path, src_ext, dst_path, dst_ext, clips, max_side = 1920, rotate = 0, flip_lr = 0, flip_rb = 0):
         img = Image.open(src_path)
         width, height = img.size
         max_src = max(width, height)
         if os.path.exists(dst_path):
             os.remove(dst_path)
         newimg = img
+        if sum(clips) > 0:
+            newimg = newimg.crop((clips[0], clips[1], width-clips[2], height-clips[3]))
+            width, height = newimg.size
         if max_src > max_side:
             if width > height:
                 new_width = max_side

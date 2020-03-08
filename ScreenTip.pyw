@@ -1,6 +1,7 @@
 #!python3
 # -*- coding: utf-8 -*-
 #Author: yinkaisheng@foxmail.com
+#Press Ctrl+Alt+F12 4 seconds to close tip
 import os, sys, time, ctypes, configparser
 import tkinter as tk
 
@@ -10,13 +11,16 @@ FontName = '微软雅黑'
 FontSize = 50
 Opacity = 100   #0~255
 Anchor = 'center'  #nw, n, ne, w, center, e, sw, e, se
+ColorKey = 0xFFFFFF#rgb color
+ExitAfterSeconds = 0
 
 class Example(tk.Frame):
     def __init__(self):
         super().__init__()
         self.timerTick = 500
         self.hotkeyTimes = 0
-        self.initConfig()
+        if not ScreenText:
+            self.initConfig()
         self.initUI()
 
     def initConfig(self):
@@ -49,21 +53,31 @@ class Example(tk.Frame):
         WS_EX_NOACTIVATE = 0x08000000
         WS_EX_TOPMOST = 0x00000008
         WS_EX_TRANSPARENT = 0x00000020
-        exStyle = WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_NOACTIVATE | WS_EX_TOPMOST | WS_EX_TRANSPARENT
+        WS_EX_TOOLWINDOW = 0x00000080
+        exStyle = WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_NOACTIVATE | WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW
         self.handle = int(self.master.frame(), 16)
         ctypes.windll.user32.SetWindowLongW(self.handle, GWL_EXSTYLE, exStyle)
-        ctypes.windll.user32.SetLayeredWindowAttributes(self.handle, 0xFFFFFF, Opacity, 3)
+        LWA_COLORKEY, LWA_ALPHA = 1, 2
+        ctypes.windll.user32.SetLayeredWindowAttributes(self.handle, ColorKey, Opacity, LWA_COLORKEY | LWA_ALPHA)
+        # call SetWindowDisplayAffinity to exclude from screen capture
+        WDA_MONITOR = 1
+        ret = ctypes.windll.user32.SetWindowDisplayAffinity(self.handle, WDA_MONITOR)
+        print('SetWindowDisplayAffinity returns', ret)
 
         self.pack(fill = tk.BOTH, expand = 1)
-        label = tk.Label(self, text = ScreenText, anchor = Anchor, font = (FontName, FontSize), fg = TextColor, bg = '#FFFFFF')
+        label = tk.Label(self, text = ScreenText, anchor = Anchor, font = (FontName, FontSize), fg = TextColor, bg = '#FFFFFF', wraplength=sw)
         label.pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
         self.master.after(self.timerTick, self.onTimer)
+        self.startTime = time.perf_counter()
 
     def onTimer(self):
         HWND_TOPMOST = -1
         NOSIZE, NOMOVE = 1, 2
         ctypes.windll.user32.SetWindowPos(self.handle, HWND_TOPMOST, 0, 0, 0, 0, NOSIZE|NOMOVE)
         self.checkExit()
+        if ExitAfterSeconds > 0 and time.perf_counter() - self.startTime > ExitAfterSeconds:
+            self.master.destroy()
+            return
         self.master.after(self.timerTick, self.onTimer)
 
     def isKeyPressed(self, key):
@@ -86,6 +100,14 @@ def main():
     root.mainloop()
 
 if __name__ == '__main__':
-    if len(sys.argv) >= 2:
-        ScreenText = sys.argv[1]
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--msg', type=str, default='', help='message text')
+    parser.add_argument('-t', '--time', type=int, default='0', help='exit time')
+    parser.add_argument('-s', '--size', type=int, default=FontSize, help='font size')
+    args = parser.parse_args()
+
+    ScreenText = args.msg
+    ExitAfterSeconds = args.time
+    FontSize = args.size
     main()

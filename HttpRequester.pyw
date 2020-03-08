@@ -243,7 +243,7 @@ class MainFrame(AsyncFrame):
         self.enable_ui(False)
         self.time_label.config(text = 'Waiting ...')
 
-    def response_notify(self, notify_id, args):
+    def response_notify(self, thread_id, notify_id, args):
         if self.http_item.exception:
             response_time = 'Exception: {}'.format(self.http_item.exception.__class__.__name__)
         else:
@@ -254,6 +254,9 @@ class MainFrame(AsyncFrame):
         self.response_header_entry.delete(1.0, tk.END)
         self.response_header_entry.insert(1.0, self.http_item.response_header)
         self.format_json()
+        fout = open('HttpRequest.txt', 'wt', encoding = 'utf-8')
+        fout.write(self.http_item.response_data)
+        fout.close()
 
         self.http_items.append(self.http_item)
         self.history_combo['values'] += (self.http_item.time + ' ' + self.http_item.url, )
