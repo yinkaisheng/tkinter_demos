@@ -252,11 +252,11 @@ class EditMenu():
     def __init__(self, widget: tk.Widget):
         self.widget = widget
         self.menu = tk.Menu(widget, tearoff=0)
-        self.menu.add_command(label="全选(Ctrl+A)", command=self.onSelectAll)
+        self.menu.add_command(label="(Ctrl+A) SelectAll", command=self.onSelectAll)
         self.menu.add_separator()
-        self.menu.add_command(label="复制(Ctrl+C)", command=self.onCopy)
-        self.menu.add_command(label="粘贴(Ctrl+V)", command=self.onPaste)
-        self.menu.add_command(label="剪切(Ctrl+X)", command=self.onCut)
+        self.menu.add_command(label="(Ctrl+C) Copy", command=self.onCopy)
+        self.menu.add_command(label="(Ctrl+V) Paste", command=self.onPaste)
+        self.menu.add_command(label="(Ctrl+X) Cut", command=self.onCut)
 
     def deleteSelection(self):
         if self.widget.__class__.__name__ == 'Entry':

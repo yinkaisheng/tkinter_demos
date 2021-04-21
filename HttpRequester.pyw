@@ -10,7 +10,7 @@ import traceback
 import tkinter as tk
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
-from tkasyncframe import AsyncFrame
+from tkasyncframe import AsyncFrame, EditMenu
 from typing import (Any, Callable, Dict, List, Sequence, Tuple)
 
 try:
@@ -117,6 +117,8 @@ class MainFrame(AsyncFrame):
         self.send_btn.pack(side=tk.RIGHT)
         self.url_entry = ttk.Entry(url_frame, textvariable=self.url_var)
         self.url_entry.pack(fill=tk.X, expand=1, padx=4)
+        self.url_menu = EditMenu(self.url_entry)
+        self.url_entry.bind("<Button-3>", self.url_menu.showMenu)
 
         config_frame = ttk.Frame(self)
         config_frame.pack(fill=tk.X, padx=4, pady=4)
@@ -128,6 +130,8 @@ class MainFrame(AsyncFrame):
         ttk.Label(config_frame, text='Timeout:').pack(side=tk.RIGHT)
         self.proxy_entry = ttk.Entry(config_frame)
         self.proxy_entry.pack(side=tk.RIGHT)
+        self.proxy_menu = EditMenu(self.proxy_entry)
+        self.proxy_entry.bind("<Button-3>", self.proxy_menu.showMenu)
         self.proxy_combo = ttk.Combobox(config_frame, textvariable=self.proxy_var, state='readonly', width=4)
         self.proxy_combo.pack(side=tk.RIGHT, padx=4)
         self.proxy_combo['values'] = ('http', 'https')
@@ -144,9 +148,13 @@ class MainFrame(AsyncFrame):
         ttk.Label(data_frame, text='ResponsetHeader:').grid(row=0, column=4, stick=tk.W)
         self.request_header_entry = ScrolledText(data_frame, height=HEADER_TEXT_HEIGHT)
         self.request_header_entry.grid(row=1, column=0, columnspan=4, stick=tk.NSEW)
+        self.request_header_menu = EditMenu(self.request_header_entry)
+        self.request_header_entry.bind("<Button-3>", self.request_header_menu.showMenu)
 
         self.response_header_entry = ScrolledText(data_frame, height=HEADER_TEXT_HEIGHT)
         self.response_header_entry.grid(row=1, column=4, columnspan=4, stick=tk.NSEW)
+        self.response_header_menu = EditMenu(self.response_header_entry)
+        self.response_header_entry.bind("<Button-3>", self.response_header_menu.showMenu)
 
         ttk.Label(data_frame, text='RequestData:').grid(row=2, column=0, stick=tk.W)
         ttk.Label(data_frame, text='ResponsetData:').grid(row=2, column=4, stick=tk.W)
@@ -155,9 +163,13 @@ class MainFrame(AsyncFrame):
         self.json_check.grid(row=2, column=5, stick=tk.W)
         self.request_data_entry = ScrolledText(data_frame, wrap=tk.WORD)
         self.request_data_entry.grid(row=3, column=0, columnspan=4, stick=tk.NSEW)
+        self.request_data_menu = EditMenu(self.request_data_entry)
+        self.request_data_entry.bind("<Button-3>", self.request_data_menu.showMenu)
 
         self.response_data_entry = ScrolledText(data_frame, wrap=tk.WORD)
         self.response_data_entry.grid(row=3, column=4, columnspan=4, stick=tk.NSEW)
+        self.response_data_menu = EditMenu(self.response_data_entry)
+        self.response_data_entry.bind("<Button-3>", self.response_data_menu.showMenu)
 
         values = [http.time + ' ' + http.url for http in self.http_items]
         self.history_combo['values'] = values
