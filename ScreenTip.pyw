@@ -1,18 +1,23 @@
 #!python3
 # -*- coding: utf-8 -*-
 #Author: yinkaisheng@foxmail.com
-#Press Ctrl+Alt+F12 4 seconds to close tip
-import os, sys, time, ctypes, configparser
+# Press Ctrl+Alt+F12 4 seconds to close tip
+import os
+import sys
+import time
+import ctypes
+import configparser
 import tkinter as tk
 
 ScreenText = 'Hi. This is a screen tip. 你好'
 TextColor = '#FF0000'
 FontName = '微软雅黑'
 FontSize = 50
-Opacity = 100   #0~255
-Anchor = 'center'  #nw, n, ne, w, center, e, sw, e, se
-ColorKey = 0xFFFFFF#rgb color
+Opacity = 100  # 0~255
+Anchor = 'center'  # nw, n, ne, w, center, e, sw, e, se
+ColorKey = 0xFFFFFF  # rgb color
 ExitAfterSeconds = 0
+
 
 class Example(tk.Frame):
     def __init__(self):
@@ -30,7 +35,7 @@ class Example(tk.Frame):
         if os.path.exists(iniFile):
             global ScreenText, TextColor, FontName, FontSize, Opacity, Anchor
             config = configparser.ConfigParser()
-            config.read(iniFile, encoding= 'utf-8')
+            config.read(iniFile, encoding='utf-8')
             ScreenText = config.get('config', 'ScreenText').replace('\\n', '\n')
             Anchor = config.get('config', 'Anchor')
             TextColor = config.get('config', 'TextColor')
@@ -46,7 +51,7 @@ class Example(tk.Frame):
         self.master.wm_attributes("-transparentcolor", "#FFFFFF")
         sw = self.master.winfo_screenwidth()
         sh = self.master.winfo_screenheight()
-        self.master.geometry('{}x{}+{}+{}'.format(sw, sh//2, 0, 0))
+        self.master.geometry('{}x{}+{}+{}'.format(sw, sh // 2, 0, 0))
         GWL_EXSTYLE = -20
         WS_EX_COMPOSITED = 0x02000000
         WS_EX_LAYERED = 0x00080000
@@ -64,23 +69,23 @@ class Example(tk.Frame):
         ret = ctypes.windll.user32.SetWindowDisplayAffinity(self.handle, WDA_MONITOR)
         print('SetWindowDisplayAffinity returns', ret)
 
-        self.pack(fill = tk.BOTH, expand = 1)
-        label = tk.Label(self, text = ScreenText, anchor = Anchor, font = (FontName, FontSize), fg = TextColor, bg = '#FFFFFF', wraplength=sw)
-        label.pack(side = tk.TOP, fill = tk.BOTH, expand = 1)
+        self.pack(fill=tk.BOTH, expand=1)
+        label = tk.Label(self, text=ScreenText, anchor=Anchor, font=(FontName, FontSize), fg=TextColor, bg='#FFFFFF', wraplength=sw)
+        label.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.master.after(self.timerTick, self.onTimer)
         self.startTime = time.perf_counter()
 
     def onTimer(self):
         HWND_TOPMOST = -1
         NOSIZE, NOMOVE = 1, 2
-        ctypes.windll.user32.SetWindowPos(self.handle, HWND_TOPMOST, 0, 0, 0, 0, NOSIZE|NOMOVE)
+        ctypes.windll.user32.SetWindowPos(self.handle, HWND_TOPMOST, 0, 0, 0, 0, NOSIZE | NOMOVE)
         self.checkExit()
         if ExitAfterSeconds > 0 and time.perf_counter() - self.startTime > ExitAfterSeconds:
             self.master.destroy()
             return
         self.master.after(self.timerTick, self.onTimer)
 
-    def isKeyPressed(self, key):
+    def isKeyPressed(self, key: int):
         state = ctypes.windll.user32.GetAsyncKeyState(key)
         return True if state & 0x8000 else False
 
@@ -98,6 +103,7 @@ def main():
     root = tk.Tk()
     app = Example()
     root.mainloop()
+
 
 if __name__ == '__main__':
     import argparse

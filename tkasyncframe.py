@@ -1,19 +1,20 @@
 #!python3
 # -*- coding: utf-8 -*-
-# author: yinkaisheng@live.com
+# author: yinkaisheng@foxmail.com
 import os
 import sys
 import time
 import queue
-from typing import Any
 from collections import namedtuple
 from threading import Thread
+from typing import (Any, Callable, Dict, List, Sequence, Tuple)
 import tkinter as tk
+from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
 
 class TimerInfo():
-    def __init__(self, tid: int, interval: int, startTime: float, func: callable):
+    def __init__(self, tid: int, interval: int, startTime: float, func: Callable[[int, int, float], None]):
         self.tid = tid
         self.interval = interval
         self.startTime = startTime
@@ -21,84 +22,87 @@ class TimerInfo():
         self.execCount = 1
         self.elapsed = 0
 
-class WidgetUtil():
-    def enableWidget(self, widget, enable: bool):
-        if enable:
-            widget.config(state = tk.NORMAL)
-        else:
-            widget.config(state = tk.DISABLED)
 
-    def appendEntryText(self, entry, text: str):
+class WidgetUtil():
+    def enableWidget(self, widget: tk.Widget, enable: bool):
+        if enable:
+            widget.config(state=tk.NORMAL)
+        else:
+            widget.config(state=tk.DISABLED)
+
+    def appendEntryText(self, entry: ttk.Entry, text: str):
         entry.insert(tk.END, text)
         if entry.__class__.__name__ == 'Entry':
             entry.icursor(tk.END)
         elif entry.__class__.__name__ == 'ScrolledText':
             entry.see(tk.END)
 
-    def getEntryText(self, entry) -> str:
+    def getEntryText(self, entry: ttk.Entry) -> str:
         entry.get('0.0', tk.END)
 
-    def clearEntry(self, entry):
+    def clearEntry(self, entry: ttk.Entry):
         if isinstance(entry, tk.Entry):
             entry.delete(0, tk.END)
         elif isinstance(entry, ScrolledText):
             entry.delete(1.0, tk.END)
 
-    def deleteEntrySelection(self, entry):
+    def deleteEntrySelection(self, entry: ttk.Entry):
         try:
             self.widget.delete('sel.first', 'sel.last')
         except Exception as ex:
             pass
 
-    def getComboBoxSelection(self, combo) -> int:
+    def getComboBoxSelection(self, combo: ttk.Combobox) -> int:
         return combo.current()
 
-    def setComboBoxSelection(self, combo, index: int):
+    def setComboBoxSelection(self, combo: ttk.Combobox, index: int):
         combo.current(index)
 
-    def getComboBoxItemText(self, combo, index: int) -> str:
+    def getComboBoxItemText(self, combo: ttk.Combobox, index: int) -> str:
         return combo['values'][index]
 
-    def getComboBoxAllItemsText(self, combo) -> tuple:
+    def getComboBoxAllItemsText(self, combo: ttk.Combobox) -> tuple:
         return combo['values']
 
-    def getComboBoxItemsCount(self, combo) -> tuple:
+    def getComboBoxItemsCount(self, combo: ttk.Combobox) -> tuple:
         return len(combo['values'])
 
-    def addComboBoxItem(self, combo, item: str):
+    def addComboBoxItem(self, combo: ttk.Combobox, item: str):
         combo['values'] += (item, )  # tuple add
 
-    def addComboBoxItemIfNotExists(self, combo, item: str):
+    def addComboBoxItemIfNotExists(self, combo: ttk.Combobox, item: str):
         if item in combo['values']:
             return
         self.addComboBoxItem(combo, item)
 
-    def insertComboBoxItem(self, combo, index: int, item: str):
+    def insertComboBoxItem(self, combo: ttk.Combobox, index: int, item: str):
         combo['values'] = combo['values'][:index] + (item, ) + combo['values'][index:]
 
-    def insertComboBoxItemIfNotExists(self, combo, index: int, item: str):
+    def insertComboBoxItemIfNotExists(self, combo: ttk.Combobox, index: int, item: str):
         if item in combo['values']:
             return
         self.insertComboBoxItem(combo, index, item)
 
-    def deleteComboBoxItem(self, combo, index: int):
+    def deleteComboBoxItem(self, combo: ttk.Combobox, index: int):
         if index < 0:
             index = len(combo['values']) + index
         combo['values'] = combo['values'][:index] + combo['values'][index + 1:]
 
-    def deleteComboBoxItemStr(self, combo, item: str):
+    def deleteComboBoxItemStr(self, combo: ttk.Combobox, item: str):
         try:
             index = combo['values'].index(item)
             self.deleteComboBoxItem(combo, index)
         except ValueError as ex:
             pass
 
-    def clearComboBox(self, combo):
+    def clearComboBox(self, combo: ttk.Combobox):
         combo['values'] = ()
+
 
 class AsyncFrame(tk.Frame):
     NotifyID_ThreadExit = -1
     TimerID_Thread = -1
+
     def __init__(self, master=None, cnf={}, **kw):
         super().__init__(master, cnf, **kw)
         self._timers = []
@@ -108,7 +112,7 @@ class AsyncFrame(tk.Frame):
         self._threadNotifyFuncs = {}
         self._notifyQueue = queue.Queue()
 
-    def setIcon(self, iconPath = '', iconBytes = None, overWrite = True):
+    def setIcon(self, iconPath: str = '', iconBytes: bytes = None, overWrite: bool = True):
         '''Linux should use xbm image'''
         if iconBytes:
             iconPath = 'tkframetemp.ico'
@@ -120,7 +124,7 @@ class AsyncFrame(tk.Frame):
         if iconBytes:
             os.remove(iconPath)
 
-    def centerWindow(self, width = 600, height = 300):
+    def centerWindow(self, width: int = 600, height: int = 300):
         sw = self.master.winfo_screenwidth()
         sh = self.master.winfo_screenheight() - 40
         if isinstance(width, float):
@@ -140,7 +144,7 @@ class AsyncFrame(tk.Frame):
     def maxSize(self, widht: int, height: int):
         self.master.maxsize(widht, height)
 
-    def moveWindow(self, x: int, y: int, width = -1, height = -1):
+    def moveWindow(self, x: int, y: int, width: int = -1, height: int = -1):
         sw = self.master.winfo_screenwidth()
         sh = self.master.winfo_screenheight()
         if isinstance(width, float):
@@ -165,7 +169,7 @@ class AsyncFrame(tk.Frame):
     def hideWindow(self):
         self.master.withdraw()
 
-    def setTopmost(self, top = True):
+    def setTopmost(self, top: bool = True):
         self.master.wm_attributes("-topmost", 1 if top else 0)
 
     def setMiniTimerInterval(self, interval: int):
@@ -177,15 +181,15 @@ class AsyncFrame(tk.Frame):
                 return True
         return False
 
-    def startTimer(self, timerId: int, timerInterval: int, timerFunc: callable):
+    def startTimer(self, timerId: int, timerInterval: int, timerFunc: Callable[[int, int, float], None]):
         '''
         timerId: int, must > 0
         timerInterval: int, in millisecond, must > 0
-        timerFunc: function(timerId, callCount, elapsedTime)
+        timerFunc: function(timerId: int, callCount: int, elapsedTime: float
         '''
         if self.isTimerStart(timerId):
             print('timer {} already started'.format(timerId))
-            return False  #already started
+            return False  # already started
         timer = TimerInfo(timerId, timerInterval, time.perf_counter(), timerFunc)
         self._timers.append(timer)
         if len(self._timers) == 1:  # first start
@@ -210,15 +214,16 @@ class AsyncFrame(tk.Frame):
         if self._timers:
             self.master.after(self._minTimerTick, self._onTimerCall)
 
-    def runInThread(self, func: callable, args: Any, notifyFunc: callable) -> int:
+    def runInThread(self, func: Callable[[int, Any], Any], args: Any, notifyFunc: Callable[[int, int, Any], None]) -> int:
         '''
         func(threadId, args) is executed in a thread
-        call threadNotifyUI(threadId, notifyId, args) in func thread, then notifyFunc(threadId, notifyId, args) will be called in main thread
+        call threadNotifyUI(threadId, notifyId, args) in func thread
+        then notifyFunc(threadId, notifyId, args) will be called in main thread
         return a fake thread id starts with 1
         '''
         self._threadid += 1
         self._threadNotifyFuncs[self._threadid] = notifyFunc
-        func_thread = Thread(target = self._threadFunc, args = (self._threadid, func, args))
+        func_thread = Thread(target=self._threadFunc, args=(self._threadid, func, args))
         func_thread.setDaemon(True)
         func_thread.start()
         if not self.isTimerStart(AsyncFrame.TimerID_Thread):
@@ -228,7 +233,7 @@ class AsyncFrame(tk.Frame):
     def threadNotifyUI(self, threadId: int, notifyId: int, args: Any):
         self._notifyQueue.put((threadId, notifyId, args))
 
-    def _threadFunc(self, threadId: int, func: callable, args: Any):
+    def _threadFunc(self, threadId: int, func: Callable[[int, Any], Any], args: Any):
         ret = func(threadId, args)
         self._notifyQueue.put((threadId, AsyncFrame.NotifyID_ThreadExit, ret))
 
@@ -242,15 +247,16 @@ class AsyncFrame(tk.Frame):
                 if not self._threadNotifyFuncs:
                     self.stopTimer(AsyncFrame.TimerID_Thread)
 
+
 class EditMenu():
-    def __init__(self, widget):
+    def __init__(self, widget: tk.Widget):
         self.widget = widget
-        self.menu = tk.Menu(widget, tearoff = 0)
-        self.menu.add_command(label = "全选(Ctrl+A)", command = self.onSelectAll)
+        self.menu = tk.Menu(widget, tearoff=0)
+        self.menu.add_command(label="全选(Ctrl+A)", command=self.onSelectAll)
         self.menu.add_separator()
-        self.menu.add_command(label = "复制(Ctrl+C)", command = self.onCopy)
-        self.menu.add_command(label = "粘贴(Ctrl+V)", command = self.onPaste)
-        self.menu.add_command(label = "剪切(Ctrl+X)", command = self.onCut)
+        self.menu.add_command(label="复制(Ctrl+C)", command=self.onCopy)
+        self.menu.add_command(label="粘贴(Ctrl+V)", command=self.onPaste)
+        self.menu.add_command(label="剪切(Ctrl+X)", command=self.onCut)
 
     def deleteSelection(self):
         if self.widget.__class__.__name__ == 'Entry':
@@ -272,28 +278,28 @@ class EditMenu():
 
     def onCopy(self):
         self.widget.event_generate("<<Copy>>")
-        #try:
-            #if self.widget.__class__.__name__ == 'Entry':
+        # try:
+            # if self.widget.__class__.__name__ == 'Entry':
                 #text = self.widget.get()
-            #elif self.widget.__class__.__name__ == 'ScrolledText':
-                #text = self.widget.get(tk.SEL_FIRST, tk.SEL_LAST)  # text = self.widget.selection_get()
-            #self.widget.clipboard_clear()
-            #self.widget.clipboard_append(text)
-        #except Exception as ex:
-            #pass
+            # elif self.widget.__class__.__name__ == 'ScrolledText':
+                # text = self.widget.get(tk.SEL_FIRST, tk.SEL_LAST)  # text = self.widget.selection_get()
+            # self.widget.clipboard_clear()
+            # self.widget.clipboard_append(text)
+        # except Exception as ex:
+            # pass
 
     def onPaste(self):
         self.widget.event_generate("<<Paste>>")
-        #self.deleteSelection()
+        # self.deleteSelection()
         #text = self.widget.clipboard_get()
         #self.widget.insert(tk.INSERT, text)
 
     def onCut(self):
         self.widget.event_generate("<<Cut>>")
-        #self.onCopy()
-        #self.deleteSelection()
+        # self.onCopy()
+        # self.deleteSelection()
 
-    def showMenu(self, event):
+    def showMenu(self, event: tk.Event):
         self.widget.focus_set()
         self.menu.post(event.x_root, event.y_root)
 
