@@ -66,7 +66,8 @@ class MainFrame(AsyncFrame, WidgetUtil):
         if sys.platform == 'win32':
             self.master.iconbitmap(iconPath)
         else:
-            self.master.iconbitmap('@stopwatch.xbm')
+            # self.master.iconbitmap('@stopwatch.xbm')
+            pass
         os.remove(iconPath)
 
     def onCheckUseSysTime(self):
