@@ -35,3 +35,11 @@ ScreenTip.pyw is a tool than shows a topmost tip over other windows while you st
 BatchImageResizer.pyw is a tool than can batch process image files.
 
 ![BatchImageResizer](images/BatchImageResizer.png)
+
+
+**WinAnalyzeDump**
+
+WinAnalyzeDump.py is a tool that uses windbg.exe or cdb.exe to anlayze crash dumps.
+
+![WinAnalyzeDump](images/WinAnalyzeDump.jpg)
+
